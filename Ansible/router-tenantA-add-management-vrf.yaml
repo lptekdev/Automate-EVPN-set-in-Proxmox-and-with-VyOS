@@ -1,0 +1,33 @@
+- name: Tenant perimeter management VRF configuration
+  hosts: "router-tenantA"
+  gather_facts: yes
+  user: vyos
+  collections:
+    - vyos.vyos
+  tasks:   
+    - name: Create the management VRF
+      vyos.vyos.vyos_vrf:
+        config:
+          instances:
+            - name: "management"
+              description: "management"
+              table_id: 100
+    - name: Set the default route
+      vyos.vyos.vyos_config:
+        lines:
+          - set vrf name management protocols static route 0.0.0.0/0 next-hop {{ management_gw }}
+        save: false
+    - name: Configure the management VRF
+      vyos.vyos.vyos_config:
+        lines:
+          - set interfaces ethernet eth0 vrf management
+          - set service ssh vrf management
+          - set service ssh disable-host-validation # to allow the SSH connection be quicker
+          - delete protocols static route 0.0.0.0/0 next-hop {{ management_gw }}
+        save: false
+      register: management_vrf_result
+      failed_when: >
+        management_vrf_result.failed | default(false)
+        and 'command timeout triggered'
+        not in (management_vrf_result.msg | default(''))
+      ignore_unreachable: true

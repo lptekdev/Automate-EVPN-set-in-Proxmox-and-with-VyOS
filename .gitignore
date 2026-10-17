@@ -1,0 +1,8 @@
+bin/
+lib/
+lib64
+include/
+Terraform/.terraform
+Terraform/.terraform*
+Terraform/terraform*
+pyvenv.cfg

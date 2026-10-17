@@ -1,0 +1,6 @@
+ipaddress
+proxmoxer >= 2.3
+requests
+ansible
+ansible-pylibssh
+paramiko 

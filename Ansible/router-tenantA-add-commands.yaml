@@ -1,0 +1,67 @@
+- name: SDN EVPN router configuration
+  hosts: router-tenantA
+  gather_facts: yes
+  user: vyos
+  collections:
+    - vyos.vyos
+  tasks:
+    - name: Configure the physical interfaces
+      vyos.vyos.vyos_config:
+        lines:          
+          - set interfaces ethernet eth1 address {{ overlay_ip_address }}
+          - set interfaces ethernet eth1 mtu 1600
+          - set interfaces ethernet eth2 address dhcp
+          
+        save: false
+    - name: Configure general EVPN settings
+      vyos.vyos.vyos_config:
+        lines:
+          - set protocols bgp system-as {{ bgp_as_number }}
+          - set protocols bgp address-family l2vpn-evpn advertise ipv4 unicast
+          - set protocols bgp address-family l2vpn-evpn advertise-all-vni
+          - set protocols bgp peer-group {{ ibgppeergroup }} update-source {{ overlay_ip_address_n_mask }}                   
+          - set protocols bgp peer-group {{ ibgppeergroup }}
+          - set protocols bgp peer-group {{ ibgppeergroup }} remote-as {{ bgp_as_number }}
+    
+    - name: Configure EVPN with proxmox hosts
+      vyos.vyos.vyos_config:
+        lines:
+          - set protocols bgp neighbor {{ item }} peer-group {{ ibgppeergroup }}
+          - set protocols bfd peer {{ item }} source address {{ overlay_ip_address_n_mask }}
+      loop: "{{ proxmox_evpn_peers }}"
+
+    - name: Configure remaining EVPN settings based on IGP peer group
+      vyos.vyos.vyos_config:
+        lines:
+          # general BGP and Proxmox peers             
+          - set protocols bgp parameters log-neighbor-changes
+          - set protocols bgp peer-group {{ ibgppeergroup }} address-family l2vpn-evpn           
+          - set protocols bgp peer-group {{ ibgppeergroup }} update-source {{ overlay_ip_address_n_mask }} 
+          - set protocols bgp peer-group {{ ibgppeergroup }} bfd
+
+          # setting the VRF zone
+          - set interfaces vxlan {{ vrf_tenant_zone_vxlan }} mtu 1550
+          - set interfaces vxlan {{ vrf_tenant_zone_vxlan }} parameters nolearning
+          - set interfaces vxlan {{ vrf_tenant_zone_vxlan }} port 4789
+          - set interfaces vxlan {{ vrf_tenant_zone_vxlan }} source-address {{ overlay_ip_address_n_mask }} 
+          - set interfaces vxlan {{ vrf_tenant_zone_vxlan }} vni {{ vrf_zone_vni }}
+          - set vrf name {{ vrf_name }}
+          - set vrf name {{ vrf_name }} protocols bgp address-family ipv4-unicast redistribute connected
+          - set vrf name {{ vrf_name }} protocols bgp address-family ipv4-unicast redistribute static
+          - set vrf name {{ vrf_name }} protocols bgp address-family l2vpn-evpn advertise ipv4 unicast
+          - set vrf name {{ vrf_name }} protocols bgp system-as {{ bgp_as_number }}
+          - set vrf name {{ vrf_name }} table {{ vrf_zone_vni }}
+          - set vrf name {{ vrf_name }} vni {{ vrf_zone_vni }}
+          - set interfaces bridge {{ vrf_tenant_zone_bridge }} description {{ vrf_name }}
+          - set interfaces bridge {{ vrf_tenant_zone_bridge }} member interface {{ vrf_tenant_zone_vxlan }}
+          - set interfaces bridge {{ vrf_tenant_zone_bridge }} vrf {{ vrf_name }}   
+          - set interfaces ethernet eth2 vrf {{ vrf_name }}  
+        save: false
+
+    - name: Configure the source NAT (SNAT) for internet access via internet interface
+      vyos.vyos.vyos_config:
+        lines:
+          # Set source NAT
+          - set nat source rule 20 outbound-interface name eth2
+          - set nat source rule 20 translation address 'masquerade'
+        save: true

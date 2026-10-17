@@ -1,0 +1,18 @@
+vrf_name: MiniPCs
+vrf_zone_vni: 7001
+vrf_tenant_zone_vxlan: vxlan7001
+vrf_tenant_zone_bridge: br7001
+bgp_as_number: 4200000010
+
+
+ibgppeergroup: evpnibgp
+proxmox_evpn_peers:
+  - 192.168.101.21
+  - 192.168.101.22
+  - 192.168.101.23
+
+overlay_ip_address: 192.168.101.4/24
+overlay_ip_address_n_mask: 192.168.101.4
+ansible_network_os: vyos.vyos.vyos
+ansible_connection: network_cli
+management_gw: 172.16.1.1
