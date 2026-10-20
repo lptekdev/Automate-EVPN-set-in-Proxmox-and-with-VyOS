@@ -66,7 +66,7 @@ In the Terraform folder, run:
 1. terraform init
 2. terraform apply
 
-In the Ansible folder, run byt the following order:
+In the Ansible folder, run by the following order:
 1.	ansible-playbook -i inventory.ini -e ansible_user=vyos -e ansible_password=PASSWORD router-tenantA-add-management-vrf.yaml
 2.	ansible-playbook -i inventory.ini -e ansible_user=vyos -e ansible_password=PASSWORD router-tenantA-add-commands.yaml
 
