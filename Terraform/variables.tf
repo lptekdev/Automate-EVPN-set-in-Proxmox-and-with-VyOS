@@ -48,7 +48,7 @@ variable "vm_source_id" {
 }
 
 variable "destination_storage" {
-  description = "ID of the router that will be cloned"
+  description = "Storage name to where VM will be cloned"
   type        = string
   default     = ""
 }
