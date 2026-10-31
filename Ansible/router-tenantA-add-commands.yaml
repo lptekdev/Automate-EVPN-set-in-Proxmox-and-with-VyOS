@@ -40,7 +40,7 @@
           - set protocols bgp peer-group {{ ibgppeergroup }} bfd
 
           # setting the VRF zone
-          - set interfaces vxlan {{ vrf_tenant_zone_vxlan }} mtu 1550
+          - set interfaces vxlan {{ vrf_tenant_zone_vxlan }} mtu 1500
           - set interfaces vxlan {{ vrf_tenant_zone_vxlan }} parameters nolearning
           - set interfaces vxlan {{ vrf_tenant_zone_vxlan }} port 4789
           - set interfaces vxlan {{ vrf_tenant_zone_vxlan }} source-address {{ overlay_ip_address_n_mask }} 
